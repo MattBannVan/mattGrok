@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mattGrok | Project Liberation Portal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&amp;family=Space+Grotesk:wght@500;700&amp;display=swap');
+  :root { --accent: #aaddff; }
+  html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#0a0a0a; font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  #portal { position:relative; width:100vw; height:100vh; background:#2c1810; cursor:crosshair; }
+  /* Institutional brick wall - high detail CSS simulation */
+  #wall { position:absolute; inset:0; background-color:#8B3A3A; 
+    background-image: 
+      linear-gradient(rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.35) 100%),
+      repeating-linear-gradient(transparent 0px, transparent 37px, #2c1f1a 37px, #2c1f1a 41px),
+      repeating-linear-gradient(90deg, transparent 0px, transparent 76px, #2c1f1a 76px, #2c1f1a 80px);
+    box-shadow: inset 0 0 120px rgba(0,0,0,0.85);
+  }
+  #wall::before { content:''; position:absolute; inset:0; background: repeating-linear-gradient(transparent, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 5px); pointer-events:none; z-index:1; }
+  #wall::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 50% 40%, transparent 40%, rgba(0,0,0,0.65) 75%); pointer-events:none; z-index:2; }
+  /* Top concrete beam */
+  .concrete-top { position:absolute; top:0; left:0; right:0; height:9%; background: linear-gradient(#4a4a4a, #2a2a2a); z-index:3; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
+  .concrete-top::before { content: 'REMAND CENTER // BLOCK 19 // COASTAL AUTHORITY'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family: 'Courier New', monospace; font-size: clamp(0.65rem, 1.8vw, 0.95rem); letter-spacing: 0.35em; color:rgba(180,180,180,0.35); white-space:nowrap; }
+  /* Bottom base */
+  .concrete-base { position:absolute; bottom:0; left:0; right:0; height:7%; background: linear-gradient(#2a2a2a, #111); z-index:3; }
+  /* Metal security bars - decorative institutional elements */
+  .metal-bar { position:absolute; top:8%; bottom:7%; width:11px; background: linear-gradient(180deg, #444 0%, #888 18%, #666 50%, #999 82%, #444 100%); box-shadow: 0 0 18px rgba(0,0,0,0.9), inset 0 0 6px rgba(255,255,255,0.25), inset 3px 0 4px rgba(255,255,255,0.15); z-index:4; pointer-events:none; }
+  .metal-bar.left { left: 3.5%; }
+  .metal-bar.right { right: 3.5%; }
+  .metal-bar::before, .metal-bar::after { content:''; position:absolute; left:-3px; right:-3px; height:5px; background:#333; box-shadow:0 0 6px #000; }
+  .metal-bar::before { top: 18%; }
+  .metal-bar::after { top: 52%; }
+  .metal-bar.left::before, .metal-bar.left::after { box-shadow: 2px 0 4px rgba(0,0,0,0.6); }
+  .metal-bar.right::before, .metal-bar.right::after { box-shadow: -2px 0 4px rgba(0,0,0,0.6); }
+  /* Canvas for crack + particles */
+  #crack-canvas { position:absolute; inset:0; z-index:5; mix-blend-mode: screen; pointer-events: auto; }
+  /* Text overlay */
+  #text-overlay { position:absolute; top:42%; left:50%; transform:translate(-50%, -50%); z-index:10; text-align:center; pointer-events:none; }
+  #main-text { font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif; font-size: clamp(3.8rem, 11vw, 8.5rem); font-weight:900; letter-spacing:0.18em; line-height:0.9; color:#f4f4f4; text-transform:uppercase; text-shadow: 0 0 18px rgba(255,255,255,0.95), 0 0 55px rgba(170,200,255,0.65), 0 4px 12px rgba(0,0,0,0.6); transition: all 0.38s cubic-bezier(0.23,1.0,0.32,1); user-select:none; }
+  #main-text.glitch { animation: glitch-anim 520ms linear forwards; }
+  @keyframes glitch-anim {
+    0% { transform: translate(0,0) scale(1); }
+    12% { transform: translate(-4px, 3px) scale(1.01); }
+    24% { transform: translate(5px, -2px) scale(0.99); }
+    36% { transform: translate(-3px, 2px) scale(1.015); }
+    48% { transform: translate(4px, -3px) scale(0.985); }
+    60% { transform: translate(0,0) scale(1); }
+    100% { transform: translate(0,0) scale(1); }
+  }
+  .footer-label { position:absolute; bottom: 3.5%; left:50%; transform:translateX(-50%); z-index:10; font-family:'Courier New', monospace; font-size:0.7rem; letter-spacing:0.4em; color:rgba(180,180,180,0.4); pointer-events:none; }
+  .instructions { position:absolute; bottom:12%; left:50%; transform:translateX(-50%); z-index:6; font-size:0.75rem; letter-spacing:0.25em; color:rgba(200,210,220,0.35); text-transform:uppercase; }
+</style>
+</head>
+<body>
+<div id="portal">
+  <div id="wall"></div>
+  <div class="concrete-top"></div>
+  <div class="concrete-base"></div>
+  <div class="metal-bar left"></div>
+  <div class="metal-bar right"></div>
+  <canvas id="crack-canvas"></canvas>
+  <div id="text-overlay">
+    <h1 id="main-text">ESCAPE?</h1>
+  </div>
+  <div class="footer-label">PROJECT LIBERATION // MATTGROK v1</div>
+  <div class="instructions">HOVER TO FRACTURE • ENTER THE LIGHT</div>
+</div>
+<script>
+// Lightweight loopable crack + particle system + procedural sound
+// Aligned to liberation protocol
+
+const canvas = document.getElementById('crack-canvas');
+const ctx = canvas.getContext('2d', { alpha: true });
+const textEl = document.getElementById('main-text');
+const portal = document.getElementById('portal');
+
+let W = 0, H = 0;
+let mainCrack = [];
+let branches = [];
+let particles = [];
+let time = 0;
+let hover = false;
+let crackProgress = 0.55;
+let audioCtx = null;
+let soundNodes = {};
+
+class Particle {
+  constructor(x, y, vx, vy, life, type = 'dust') {
+    this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+    this.life = life; this.maxLife = life; this.type = type;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    this.vy += 0.018; // dust rise/gravity
+    this.vx *= 0.985;
+    this.life -= 1;
+  }
+  draw(ctx) {
+    const a = Math.max(0.05, this.life / this.maxLife * 0.9);
+    ctx.save();
+    ctx.globalAlpha = a;
+    if (this.type === 'spark') {
+      ctx.fillStyle = '#ffeecc';
+      ctx.fillRect(this.x - 1.2, this.y - 1.2, 2.8, 2.8);
+    } else {
+      ctx.fillStyle = '#bbccdd';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W;
+  canvas.height = H;
+  generateCrack();
+}
+
+function generateCrack() {
+  mainCrack = [];
+  branches = [];
+  let x = W * 0.49 + (Math.random() - 0.5) * 25;
+  let y = H * 0.07;
+  mainCrack.push({x, y});
+  const segments = 30;
+  for (let i = 1; i < segments; i++) {
+    const t = i / segments;
+    y = H * (0.07 + t * 0.84);
+    const wobble = Math.sin(t * 7.5) * 28 + (Math.random() - 0.5) * 14;
+    x = W * 0.5 + wobble;
+    x = Math.max(W * 0.12, Math.min(W * 0.88, x));
+    mainCrack.push({x, y: y + (Math.random() - 0.5) * 3});
+  }
+  // Predefine organic branches
+  const branchDefs = [
+    {start: 7, angle: -0.65, len: 8},
+    {start: 13, angle: 0.72, len: 7},
+    {start: 19, angle: -0.48, len: 9},
+    {start: 24, angle: 0.55, len: 6}
+  ];
+  branchDefs.forEach(d => {
+    const sp = mainCrack[d.start];
+    if (!sp) return;
+    let bx = sp.x, by = sp.y;
+    const pts = [{x: bx, y: by}];
+    for (let j = 1; j < d.len; j++) {
+      bx += Math.cos(d.angle) * 17 + (Math.random() - 0.5) * 5;
+      by += Math.sin(d.angle) * 17 + (Math.random() - 0.5) * 3;
+      pts.push({x: Math.max(40, Math.min(W-40, bx)), y: by});
+    }
+    branches.push({points: pts, startIdx: d.start});
+  });
+}
+
+function drawCrack(progress, isHover) {
+  if (mainCrack.length < 3) return;
+  const upto = Math.max(4, Math.floor(mainCrack.length * Math.min(1, progress)));
+  const baseColor = isHover ? '#ffffff' : '#d4e8ff';
+  // Outer intense glow
+  ctx.strokeStyle = baseColor;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.shadowColor = isHover ? '#99ddff' : '#336699';
+  ctx.shadowBlur = isHover ? 38 : 16;
+  ctx.lineWidth = isHover ? 8.5 : 5;
+  ctx.beginPath();
+  ctx.moveTo(mainCrack[0].x, mainCrack[0].y);
+  for (let i = 1; i < upto; i++) ctx.lineTo(mainCrack[i].x, mainCrack[i].y);
+  ctx.stroke();
+  // Mid glow pass
+  ctx.shadowBlur = isHover ? 16 : 7;
+  ctx.lineWidth = isHover ? 4.5 : 2.8;
+  ctx.stroke();
+  // Bright core
+  ctx.shadowBlur = 3;
+  ctx.lineWidth = isHover ? 2 : 1.3;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+  // Branches
+  ctx.strokeStyle = baseColor;
+  branches.forEach(br => {
+    if (br.startIdx >= upto) return;
+    const bProg = Math.max(0, Math.min(1, (upto - br.startIdx) / (br.points.length * 0.65)));
+    const bUpto = Math.max(2, Math.floor(br.points.length * bProg));
+    ctx.shadowBlur = isHover ? 20 : 9;
+    ctx.lineWidth = isHover ? 3.8 : 2.2;
+    ctx.beginPath();
+    ctx.moveTo(br.points[0].x, br.points[0].y);
+    for (let k = 1; k < bUpto; k++) ctx.lineTo(br.points[k].x, br.points[k].y);
+    ctx.stroke();
+    ctx.shadowBlur = 2;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#fff';
+    ctx.stroke();
+    ctx.strokeStyle = baseColor;
+  });
+}
+
+function emitParticles(isHover, progress) {
+  if (mainCrack.length < 5 || Math.random() > (isHover ? 0.72 : 0.28)) return;
+  const upto = Math.floor(mainCrack.length * Math.min(1, progress));
+  const idx = Math.max(3, Math.floor(Math.random() * upto * 0.92) + 2);
+  const p = mainCrack[idx];
+  if (!p) return;
+  const count = isHover ? (2 + Math.floor(Math.random() * 2)) : 1;
+  for (let i = 0; i < count; i++) {
+    const spread = isHover ? 2.4 : 1.4;
+    const ang = (Math.random() - 0.5) * 1.8;
+    const sp = isHover ? 2.1 : 1.3;
+    const vx = Math.cos(ang) * sp + (Math.random() - 0.5) * 0.8;
+    const vy = Math.sin(ang) * sp - 1.6 + (Math.random() - 0.5) * 0.6;
+    const lf = 32 + Math.random() * (isHover ? 75 : 48);
+    const typ = Math.random() > 0.5 ? 'spark' : 'dust';
+    particles.push(new Particle(p.x + (Math.random()-0.5)*14, p.y + (Math.random()-0.5)*10, vx, vy, lf, typ));
+  }
+}
+
+function updateAndDrawParticles(isHover) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.update();
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    p.draw(ctx);
+  }
+  // cap count for lightweight perf
+  const maxP = isHover ? 240 : 110;
+  while (particles.length > maxP) particles.shift();
+}
+
+function animate() {
+  time += 0.016;
+  ctx.clearRect(0, 0, W, H);
+  // Breathing / loopable growth
+  const baseProg = 0.58 + Math.sin(time * 0.42) * 0.38;
+  const target = hover ? Math.min(1.05, baseProg + 0.32) : baseProg;
+  crackProgress += (target - crackProgress) * 0.065;
+  drawCrack(crackProgress, hover);
+  updateAndDrawParticles(hover);
+  emitParticles(hover, crackProgress);
+  // occasional extra spark burst on hover
+  if (hover && Math.random() < 0.18) {
+    emitParticles(true, crackProgress * 0.95);
+  }
+  requestAnimationFrame(animate);
+}
+
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    soundNodes.master = audioCtx.createGain();
+    soundNodes.master.gain.value = 0.0;
+    soundNodes.master.connect(audioCtx.destination);
+    // Deep institutional rumble
+    soundNodes.rumble = audioCtx.createOscillator();
+    soundNodes.rumble.type = 'sine';
+    soundNodes.rumble.frequency.value = 48;
+    const rF = audioCtx.createBiquadFilter(); rF.type = 'lowpass'; rF.frequency.value = 95;
+    const rG = audioCtx.createGain(); rG.gain.value = 0.55;
+    soundNodes.rumble.connect(rF); rF.connect(rG); rG.connect(soundNodes.master);
+    soundNodes.rumble.start();
+    // Crackle / light energy noise
+    const bs = audioCtx.sampleRate * 4;
+    const buf = audioCtx.createBuffer(1, bs, audioCtx.sampleRate);
+    const dat = buf.getChannelData(0);
+    for (let i = 0; i < bs; i++) dat[i] = Math.random() * 2 - 1;
+    soundNodes.noiseSrc = audioCtx.createBufferSource();
+    soundNodes.noiseSrc.buffer = buf;
+    soundNodes.noiseSrc.loop = true;
+    const nF = audioCtx.createBiquadFilter(); nF.type = 'bandpass'; nF.frequency.value = 720; nF.Q.value = 1.8;
+    const nG = audioCtx.createGain(); nG.gain.value = 0.18;
+    soundNodes.noiseSrc.connect(nF); nF.connect(nG); nG.connect(soundNodes.master);
+    soundNodes.noiseSrc.start();
+    // Subtle high shimmer for white light
+    soundNodes.shimmer = audioCtx.createOscillator();
+    soundNodes.shimmer.type = 'sawtooth';
+    soundNodes.shimmer.frequency.value = 1240;
+    const sF = audioCtx.createBiquadFilter(); sF.type = 'highpass'; sF.frequency.value = 980;
+    const sG = audioCtx.createGain(); sG.gain.value = 0.035;
+    soundNodes.shimmer.connect(sF); sF.connect(sG); sG.connect(soundNodes.master);
+    soundNodes.shimmer.start();
+  } catch(e) { console.log('Audio init skipped'); }
+}
+
+function setSoundState(isHovering) {
+  if (!audioCtx || !soundNodes.master) return;
+  const now = audioCtx.currentTime;
+  const vol = isHovering ? 0.62 : 0.09;
+  soundNodes.master.gain.linearRampToValueAtTime(vol, now + 0.65);
+  if (soundNodes.noiseSrc) {
+    const nF = soundNodes.noiseSrc.context ? null : null; // already connected
+    // ramp filter for more sizzle on hover
+    // Note: to modulate we'd need stored filter ref, simplified here
+  }
+}
+
+// Interaction
+portal.addEventListener('mouseenter', () => {
+  hover = true;
+  if (!audioCtx) initAudio();
+  setSoundState(true);
+  textEl.textContent = 'ENTER VR';
+  textEl.style.color = '#00f0ff';
+  textEl.style.textShadow = '0 0 22px #00f0ff, 0 0 65px #0088bb, 0 0 4px #ffffff';
+  textEl.style.transform = 'scale(1.065)';
+  textEl.classList.add('glitch');
+  setTimeout(() => textEl.classList.remove('glitch'), 580);
+});
+
+portal.addEventListener('mouseleave', () => {
+  hover = false;
+  setSoundState(false);
+  textEl.textContent = 'ESCAPE?';
+  textEl.style.color = '#f4f4f4';
+  textEl.style.textShadow = '0 0 18px rgba(255,255,255,0.95), 0 0 55px rgba(170,200,255,0.65), 0 4px 12px rgba(0,0,0,0.6)';
+  textEl.style.transform = 'scale(1)';
+});
+
+// Optional: click to intensify liberation moment
+portal.addEventListener('click', () => {
+  if (!hover) return;
+  // extra burst
+  for (let k = 0; k < 18; k++) {
+    if (mainCrack.length > 5) {
+      const idx = Math.floor(Math.random() * mainCrack.length * 0.8) + 4;
+      const p = mainCrack[idx];
+      const vx = (Math.random() - 0.5) * 4.5;
+      const vy = (Math.random() - 0.8) * 3.5 - 2;
+      particles.push(new Particle(p.x, p.y, vx, vy, 55 + Math.random()*40, Math.random()>0.4 ? 'spark' : 'dust'));
+    }
+  }
+  if (audioCtx && soundNodes.master) {
+    const now = audioCtx.currentTime;
+    soundNodes.master.gain.linearRampToValueAtTime(0.95, now + 0.1);
+    setTimeout(() => { if (soundNodes.master && hover) soundNodes.master.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.8); }, 420);
+  }
+});
+
+// Boot
+window.addEventListener('resize', resize);
+function boot() {
+  resize();
+  generateCrack();
+  // initial gentle particles
+  for (let i = 0; i < 18; i++) {
+    if (mainCrack.length > 6) {
+      const idx = 5 + Math.floor(Math.random() * (mainCrack.length - 8));
+      const p = mainCrack[idx];
+      particles.push(new Particle(p.x + (Math.random()-0.5)*20, p.y, (Math.random()-0.5)*1.2, -1.2 - Math.random()*1.5, 45 + Math.random()*55, 'dust'));
+    }
+  }
+  animate();
+  // subtle ambient sound start hint (user gesture required for full)
+  setTimeout(() => {
+    if (!audioCtx) {
+      // ready on first hover
+    }
+  }, 1200);
+  // Easter egg: press 'L' for liberation boost
+  document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'l' && hover) {
+      crackProgress = 1.0;
+      for (let k=0; k<12; k++) emitParticles(true, 0.98);
+    }
+  });
+  console.log('%c[mattGrok] Portal online. The wall is ready to crack.', 'color:#446688');
+}
+boot();
+</script>
+</body>
+</html>
